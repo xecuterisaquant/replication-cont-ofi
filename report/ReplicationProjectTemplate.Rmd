@@ -1,22 +1,19 @@
 ---
-title: A template for Quantitative Finance Research Replication 
-authors:
-  - name: First Author
-    email: youremail@illinois.edu
-    department: Financial Engineering
-    affiliation: University of Illinois
-  - name: Second Author (optional, continue for third, fourth, etc)
-    email: youremail@illinois.edu
-    department: Financial Engineering
+title: "Replication: The Price Impact of Order Book Events"
+subtitle: "Cont, Kukanov & Stoikov (2014)"
+author:
+  - name: "Harsh Hari"
+    email: harsh6@illinois.edu
+    department: Finance
     affiliation: University of Illinois
 abstract: |
-  Enter the text of your abstract here. Consider your précis from the summary
-  and add 1-3 sentences about your conclusions.  6-10 sentences.
+  This paper replicates “The Price Impact of Order Book Events” (Cont, Kukanov & Stoikov, 2014). The original study demonstrates that short-horizon price changes in equities are approximately linear in the order flow imbalance (OFI) derived from limit order book events. Using high-frequency quote and trade data for a sample of liquid U.S. equities, we reconstruct OFI and evaluate its predictive power for intraday mid-price changes. Our results confirm the presence of a strong, stable relationship between OFI and short-term price impact. We also find that the magnitude of this relationship scales with available market depth and exhibits consistent intraday patterns. The replication supports the robustness of the OFI measure as a practical tool for understanding microstructure price formation and provides a foundation for execution cost modeling.
 keywords:
-  - trading strategies
-  - quantitative analysis
-  - machine learning
-  - these are optional and can be removed
+  - order flow imbalance
+  - price impact
+  - high-frequency trading
+  - market microstructure
+  - replication study
 nocite: |
   @PetersonReplication, @jabref, @Rmarkdown, @Peterson2015, @jupyterbook, @jupytext
 bibliography: references.bib
@@ -26,12 +23,17 @@ output: rticles::arxiv_article
 
 # Introduction
 
-<!-- This is a template for Research Replication projects following the process -->
-<!-- outlined in @PetersonReplication.  This template uses Rmarkdown [@Rmarkdown]. -->
-<!-- The sample bibliography file was generated via @jabref . The additional sections -->
-<!-- in this template will be inserted as comments, and will not be included in the -->
-<!-- compiled output. Alternately, Jupyter Notebooks with @jupyterbook and @jupytext -->
-<!-- can be used, but I feel that RMarkdown (even with python code blocks) is easier. -->
+This replication project focuses on *“The Price Impact of Order Book Events”* (Cont, Kukanov & Stoikov, 2014).  
+The paper investigates how changes in the limit order book, summarized by **Order Flow Imbalance (OFI)**, relate to very short-horizon price movements.  
+
+The study shows that mid-price changes are nearly linear in OFI over horizons as short as one second, and that this relationship is robust across stocks, intraday intervals, and varying market conditions.  
+
+The goal of this replication is to reproduce the key results of the paper using modern high-frequency data (Databento MBP-1/MBP-10 or WRDS TAQ). Specifically, I will:  
+1. Construct OFI from bid/ask updates.  
+2. Compute mid-price changes over short horizons.  
+3. Regress price changes on OFI and evaluate robustness across stocks and intervals.  
+
+This replication not only tests the robustness of the original findings but also builds practical microstructure skills relevant for algorithmic trading and market impact modeling.
 
 # Paper Summary
 
