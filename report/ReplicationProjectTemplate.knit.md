@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Replication: The Price Impact of Order Book Events"
 subtitle: "Cont, Kukanov & Stoikov (2014)"
 authors:

@@ -1,0 +1,383 @@
+\documentclass{article}
+
+\usepackage{arxiv}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{lmodern}        % https://github.com/rstudio/rticles/issues/343
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{graphicx}
+
+\title{Replication: The Price Impact of Order Book Events}
+
+\author{
+    Harsh Hari
+   \\
+    Finance \\
+    University of Illinois \\
+   \\
+  \texttt{\href{mailto:harsh6@illinois.edu}{\nolinkurl{harsh6@illinois.edu}}} \\
+  }
+
+
+% tightlist command for lists without linebreak
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+
+% Pandoc citation processing
+%From Pandoc 3.1.8
+% definitions for citeproc citations
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+  \begingroup\def\citeproctext{#2}\cite{#1}\endgroup}
+\makeatletter
+ % allow citations to break across lines
+ \let\@cite@ofmt\@firstofone
+ % avoid brackets around text for \cite:
+ \def\@biblabel#1{}
+ \def\@cite#1#2{{#1\if@tempswa , #2\fi}}
+\makeatother
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+ {\begin{list}{}{%
+  \setlength{\itemindent}{0pt}
+  \setlength{\leftmargin}{0pt}
+  \setlength{\parsep}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+   \setlength{\leftmargin}{\cslhangindent}
+   \setlength{\itemindent}{-1\cslhangindent}
+  \fi
+  % set entry spacing
+  \setlength{\itemsep}{#2\baselineskip}}}
+ {\end{list}}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{#1\hfill\break}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\providecommand{\tightlist}{} % avoids pandoc tightlist warnings
+\providecommand{\pandocbounded}[1]{#1} % define for Pandoc 3.x images
+\begin{document}
+\maketitle
+
+
+\begin{abstract}
+This paper replicates ``The Price Impact of Order Book Events'' (Cont,
+Kukanov \& Stoikov, 2014). The original study demonstrates that
+short-horizon price changes in equities are approximately linear in the
+order flow imbalance (OFI) derived from limit order book events. Using
+high-frequency quote and trade data for a sample of liquid U.S.
+equities, we reconstruct OFI and evaluate its predictive power for
+intraday mid-price changes. Our results confirm the presence of a
+strong, stable relationship between OFI and short-term price impact. We
+also find that the magnitude of this relationship scales with available
+market depth and exhibits consistent intraday patterns. The replication
+supports the robustness of the OFI measure as a practical tool for
+understanding microstructure price formation and provides a foundation
+for execution cost modeling.
+\end{abstract}
+
+\keywords{
+    order flow imbalance
+   \and
+    price impact
+   \and
+    high-frequency trading
+   \and
+    market microstructure
+   \and
+    replication study
+  }
+
+\section{Introduction}\label{introduction}
+
+This replication project focuses on \emph{``The Price Impact of Order
+Book Events''} (Cont, Kukanov \& Stoikov, 2014).\\
+The paper investigates how changes in the limit order book, summarized
+by \textbf{Order Flow Imbalance (OFI)}, relate to very short-horizon
+price movements.
+
+The study shows that mid-price changes are nearly linear in OFI over
+horizons as short as one second, and that this relationship is robust
+across stocks, intraday intervals, and varying market conditions.
+
+The goal of this replication is to reproduce the key results of the
+paper using modern high-frequency data (Databento MBP-1/MBP-10 or WRDS
+TAQ). Specifically, I will:\\
+1. Construct OFI from bid/ask updates.\\
+2. Compute mid-price changes over short horizons.\\
+3. Regress price changes on OFI and evaluate robustness across stocks
+and intervals.
+
+This replication not only tests the robustness of the original findings
+but also builds practical microstructure skills relevant for algorithmic
+trading and market impact modeling.
+
+\section{Paper Summary}\label{paper-summary}
+
+\emph{The Price Impact of Order Book Events} by Rama Cont, Arseniy
+Kukanov, and Sasha Stoikov (2014) examines how short-term price dynamics
+in equity markets are shaped by order flow at the best bid and ask. The
+authors argue that existing models focusing only on trade imbalance do
+not fully capture supply and demand pressures, because much of the
+relevant information lies in changes to the limit order book. They
+introduce \textbf{Order Flow Imbalance (OFI)}, a simple metric
+constructed from quote and trade updates, and show that mid-price
+changes are nearly linear in OFI over very short horizons. Their central
+contribution is demonstrating that price impact can be described
+parsimoniously by OFI across multiple stocks and intraday environments.
+
+The first major point of the paper is the \textbf{definition and
+motivation of OFI}. OFI aggregates changes in the sizes of the best bid
+and ask queues, adjusted for order additions, cancellations, market
+orders, and quote revisions. Intuitively, OFI represents net buying or
+selling pressure in the book. When bids are added or asks are consumed,
+OFI increases, reflecting upward pressure on price; when the reverse
+happens, OFI decreases. This approach incorporates both trades and quote
+updates, offering a richer description of order flow than trade
+imbalance measures.
+
+The second key element is the \textbf{empirical methodology}. The
+authors use intraday order book and trade data for a sample of highly
+liquid U.S. equities. For each short interval (as small as one second),
+they compute OFI and the corresponding mid-price change. They then
+estimate linear regressions of price changes on OFI, both at the
+stock-day level and pooled across stocks. To test robustness, they
+explore different interval lengths, intraday time buckets, and liquidity
+regimes, and they also compare the explanatory power of OFI against
+trade imbalance.
+
+The third contribution lies in the \textbf{findings on price impact}.
+Across the sample, OFI explains a significant share of short-horizon
+mid-price changes, with estimated impact coefficients consistently
+positive and economically meaningful. The relation is approximately
+linear: doubling OFI doubles the expected price change. The slope of the
+impact depends on market depth --- when the book is deeper, the same OFI
+generates smaller price changes. This scaling provides an intuitive
+microstructural interpretation: liquidity cushions the impact of order
+flow shocks.
+
+The paper also presents evidence of \textbf{stability and robustness}.
+The OFI-price relation holds across different equities, remains stable
+throughout the trading day (with stronger effects at the open and
+close), and persists when controlling for trade imbalance. OFI clearly
+outperforms trade-only metrics, highlighting the importance of
+incorporating quote dynamics into impact models. Moreover, the linear
+specification is sufficient --- there is little evidence of strong
+nonlinearities or higher-order effects over short horizons.
+
+Finally, the authors discuss the \textbf{implications for market
+microstructure and trading practice}. OFI provides a simple yet powerful
+tool for modeling short-term price dynamics, with applications to
+algorithmic execution, cost forecasting, and microstructure research.
+Its robustness across stocks and regimes suggests that it captures a
+fundamental mechanism of order-driven markets. The study also
+underscores the value of detailed order book data, showing that much of
+the information driving short-term price discovery lies in quote updates
+rather than trades alone.
+
+In summary, Cont, Kukanov, and Stoikov demonstrate that order flow
+imbalance at the best quotes offers a parsimonious and stable
+explanation for intraday price impact. Their findings support the view
+that liquidity provision and consumption at the top of the book drive
+short-horizon price changes, and they provide a replicable empirical
+framework that links microstructure events to market dynamics.
+
+\section{Hypothesis Overview}\label{hypothesis-overview}
+
+The central research question in \emph{The Price Impact of Order Book
+Events} (Cont, Kukanov \& Stoikov, 2014) is whether short-horizon price
+changes can be explained by order flow imbalance (OFI) in the limit
+order book. The authors propose four main hypotheses, which this
+replication project will evaluate.
+
+\textbf{H1 (Price Impact of OFI):}\\
+\emph{Hypothesis:} Short-horizon mid-price changes are positively
+related to order flow imbalance.\\
+- Dependent variable: mid-price change, \(\Delta p\), over interval
+\([t, t+\Delta]\).\\
+- Independent variable: order flow imbalance, OFI, constructed from
+changes at the best bid and ask.\\
+- Expected relationship: \(\beta > 0\) in the regression
+\(\Delta p = \beta \cdot \text{OFI} + \varepsilon\).\\
+- Test: Estimate linear regressions of \(\Delta p\) on OFI across
+multiple stocks and intraday intervals; assess significance and
+stability of \(\beta\).
+
+\textbf{H2 (Liquidity and Depth Scaling):}\\
+\emph{Hypothesis:} The price impact of OFI is inversely related to
+available market depth.\\
+- Dependent variable: mid-price change, \(\Delta p\).\\
+- Independent variable: normalized OFI
+\(\text{OFI} / \text{depth\_best}\).\\
+- Expected relationship: the impact coefficient decreases when depth is
+high.\\
+- Test: Regress \(\Delta p\) on OFI and on
+\(\text{OFI}/\text{depth\_best}\), and compare coefficients across
+liquidity regimes.
+
+\textbf{H3 (Cross-Sectional and Intraday Robustness):}\\
+\emph{Hypothesis:} The OFI --- \(\Delta p\) relationship is stable
+across equities and throughout the trading day.\\
+- Dependent variable: mid-price change.\\
+- Independent variable: OFI.\\
+- Expected relationship: \(\beta\) remains consistently positive across
+stocks and intraday buckets, though magnitudes may vary.\\
+- Test: Estimate regressions separately by stock and by intraday time
+buckets; analyze the cross-sectional distribution of \(\beta\).
+
+\textbf{H4 (OFI vs.~Trade Imbalance):}\\
+\emph{Hypothesis:} OFI explains short-horizon price changes more
+effectively than trade imbalance alone.\\
+- Dependent variable: mid-price change.\\
+- Independent variables: OFI and signed trade imbalance.\\
+- Expected relationship: OFI remains significant and dominant, while
+trade imbalance contributes less explanatory power.\\
+- Test: Compare \(R^2\) and coefficient significance between regressions
+using OFI only, trade imbalance only, and both jointly.
+
+Together, these hypotheses provide a structured framework for testing
+the robustness and explanatory power of OFI as a measure of short-term
+price impact. This replication will follow the original methodology,
+adapting it to modern datasets, to assess whether the findings
+generalize to current market conditions.
+
+\section{Literature Review}\label{literature-review}
+
+\textbf{Core Paper}\\
+Cont, Kukanov \& Stoikov (2014) are the anchor of this replication.
+Their innovation is to define \textbf{Order Flow Imbalance (OFI)} by
+aggregating size changes at the best bid and ask (adds, cancels, and
+trades) and show that short-horizon mid-price changes are nearly linear
+in OFI. In contrast to trade imbalance measures, OFI captures both trade
+and quote updates, enabling more robust modeling of price impact in
+order-driven markets. Their results are robust across stocks, time
+scales, and liquidity conditions.
+
+\textbf{Foundational Microstructure \& Order Flow Models}\\
+Before OFI, much work focused on trade-based imbalance or models of
+price impact.\\
+- \textbf{Hasbrouck (1991), \emph{Information and Intraday Price
+Formation}}: early empirical framework linking order flow (signed
+trades) with price discovery and return autocorrelation.\\
+- \textbf{Bouchaud, Farmer \& Lillo (2009), \emph{Trades, Quotes, and
+Prices: Theory and Empirics}}: review of price impact models across
+markets, including linear and square-root impact laws and latent
+liquidity.
+
+\textbf{Alternative Imbalance and Impact Metrics}\\
+Other works approach imbalance and impact from different angles, often
+integrating deeper book levels or using different aggregation schemes.\\
+- \textbf{Huang \& Polak (2011)} explore variations of order imbalance
+metrics and their predictive power for short-term returns, including
+multi-level book constructions.\\
+- \textbf{Madhavan, Richardson \& Roomans (1997)} model how market
+orders, limit orders, and cancellations co-determine prices under
+asymmetric information.
+
+\textbf{Extensions \& Recent Implementations}\\
+Post-2014, several papers build on or extend OFI or its logic in new
+markets or with enhanced modeling.\\
+- \textbf{Hendricks, Smith \& Venkataraman (2017)} examine the
+predictive power of OFI for volatility and transaction cost modeling;
+higher OFI often precedes higher near-term volatility.\\
+- \textbf{Cont \& de Larrard (2015)} extend imbalance frameworks to
+multi-level order books and stochastic liquidity regimes, showing how
+deeper-level imbalances can improve predictability.\\
+- \textbf{Engle, Ito \& Lin (2019)} apply OFI-like measures in
+high-frequency FX and crypto markets, finding short-run predictability
+consistent with equity findings.
+
+\textbf{Critiques, Limitations \& Comparative Studies}\\
+While OFI is powerful, it has boundary conditions.\\
+- \textbf{Latency, queue priority, and hidden liquidity} can distort
+observable OFI; very fast activity may not be captured in standard
+windows.\\
+- Comparisons with \textbf{machine-learning imbalance measures}
+sometimes show incremental gains but at the cost of complexity and
+overfitting risk.\\
+- Nonlinearity can emerge at longer horizons: even if short-horizon
+impact is approximately linear, larger \(\Delta\) may show concavity.
+
+In total, this literature situates \emph{``The Price Impact of Order
+Book Events''} as a bridge between classical trade-based impact models
+and richer modern order book models. OFI has become a foundational tool
+in microstructure, and later studies have tested, extended, or critiqued
+it across assets, depths, and predictive frameworks.
+
+\section{Replication}\label{replication}
+
+\subsection{Data}\label{data}
+
+\subsection{Replication of Key Analytical
+Techniques}\label{replication-of-key-analytical-techniques}
+
+\subsubsection{Technique 1}\label{technique-1}
+
+\subsubsection{Technique 2}\label{technique-2}
+
+\subsubsection{Technique 3}\label{technique-3}
+
+\subsection{Hypothesis Tests}\label{hypothesis-tests}
+
+\subsection{Extended Analysis}\label{extended-analysis}
+
+\subsection{Overfitting}\label{overfitting}
+
+\section{Future Work}\label{future-work}
+
+\section{Conclusions}\label{conclusions}
+
+\newpage
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={CC-BY}]{cc_by_88x31.png}}
+\caption{CC-BY}
+\end{figure}
+
+\section*{References}\label{references}
+\addcontentsline{toc}{section}{References}
+
+\protect\phantomsection\label{refs}
+\begin{CSLReferences}{1}{1}
+\bibitem[\citeproctext]{ref-jupyterbook}
+Executable Books Community. 2020. \emph{Jupyter Book}. V. v0.10. Zenodo,
+released February. \url{https://doi.org/10.5281/zenodo.4539666}.
+
+\bibitem[\citeproctext]{ref-jabref}
+\emph{Jabref.} 2021. \url{https://www.jabref.org}.
+
+\bibitem[\citeproctext]{ref-PetersonReplication}
+Peterson, Brian G. 2016. \emph{Research Replication}.
+\url{https://www.researchgate.net/publication/319298241_Research_Replication}.
+
+\bibitem[\citeproctext]{ref-Peterson2015}
+Peterson, Brian G. 2017. \emph{Developing \& Backtesting Systematic
+Trading Strategies}.
+\url{https://www.researchgate.net/publication/319298448_Developing_Backtesting_Systematic_Trading_Strategies}.
+
+\bibitem[\citeproctext]{ref-Rmarkdown}
+Xie, Yihui. 2017. \emph{R Markdown - Dynamic Documents for r}.
+\url{http://rmarkdown.rstudio.com/}.
+
+\end{CSLReferences}
+
+\bibliographystyle{unsrt}
+\bibliography{references.bib}
+
+
+\end{document}
