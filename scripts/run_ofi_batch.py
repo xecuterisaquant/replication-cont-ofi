@@ -1,5 +1,9 @@
 # scripts/run_ofi_batch.py
-import argparse, glob, os, pandas as pd, json
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+import argparse, glob, pandas as pd, json
 from src.ofi_pipeline import run_one_day, build_all_figures
 
 def main():

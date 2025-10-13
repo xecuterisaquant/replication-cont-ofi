@@ -85,8 +85,13 @@ def build_tob_series_1s(df: pd.DataFrame,cmap:ColumnMap,trading_day:pd.Timestamp
     ts=day_midnight+offsets; ts=_localize(pd.Series(ts)).astype("datetime64[ns, America/New_York]")
     df=df.copy(); df["ts"]=ts.values
     df=filter_crossed(df,cmap.bid,cmap.ask).set_index("ts").sort_index()
+    # Remove duplicate timestamps, keeping the last occurrence
+    df = df[~df.index.duplicated(keep='last')]
     start=pd.Timestamp(trading_day.date(),tz="America/New_York")+pd.Timedelta(hours=9,minutes=30)
     end  =pd.Timestamp(trading_day.date(),tz="America/New_York")+pd.Timedelta(hours=16)
+    # Convert index to timezone-aware if it's not already
+    if df.index.tz is None:
+        df.index = df.index.tz_localize("America/New_York")
     df=df.loc[(df.index>=start)&(df.index<=end)]
     grid=pd.date_range(start=start,end=end,freq=freq,tz="America/New_York")
     df=df[[cmap.bid,cmap.ask,cmap.bidsz,cmap.asksz]].reindex(grid).ffill()
@@ -100,6 +105,11 @@ def compute_ofi_depth_mid(df: pd.DataFrame)->pd.DataFrame:
     ofi+=np.where(dbP>0,bS,0.0); ofi+=np.where(dbP<0,-bS.shift(1),0.0); ofi+=np.where(dbP==0,dbS.fillna(0.0),0.0)
     ofi+=np.where(daP>0,-aS.shift(1),0.0); ofi+=np.where(daP<0,aS,0.0); ofi+=np.where(daP==0,-daS.fillna(0.0),0.0)
     depth=bS+aS; mid=0.5*(bP+aP); d_mid_bps=1e4*mid.pct_change()
+    
+    # Filter out unrealistic price jumps (>10% move in 1 second = >1000 bps)
+    # These are likely data errors or symbol mix-ups
+    d_mid_bps = d_mid_bps.where(abs(d_mid_bps) < 1000, np.nan)
+    
     return pd.DataFrame({"bid":bP,"ask":aP,"bid_sz":bS,"ask_sz":aS,"depth":depth,"ofi":ofi,"mid":mid,"d_mid_bps":d_mid_bps},index=df.index)
 
 def normalize_ofi(df: pd.DataFrame,window_secs:int=600,min_periods:int=50)->pd.DataFrame:

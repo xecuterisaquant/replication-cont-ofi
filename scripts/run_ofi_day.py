@@ -1,4 +1,8 @@
 # scripts/run_ofi_day.py
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import argparse
 from src.ofi_pipeline import run_one_day, build_all_figures
 
