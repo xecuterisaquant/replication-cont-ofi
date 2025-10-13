@@ -1,0 +1,68 @@
+---
+title: "OFI Replication: Short précis and quick checks"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Data & Results
+
+This minimal report reads the regression panel and a couple of per symbol×day time series and renders one table and figures.
+
+```{r}
+library(arrow)
+library(dplyr)
+library(ggplot2)
+
+panel_path <- "results/regressions/by_symbol_day.parquet"
+if (file.exists(panel_path)) {
+  pan <- read_parquet(panel_path)
+  pan <- pan %>% arrange(day, symbol)
+  head(pan, 10)
+} else {
+  cat("Panel parquet not found at", panel_path, "\n")
+}
+```
+
+### Quick Table
+
+```{r}
+if (exists("pan")) {
+  pan %>% select(symbol, day, beta, se_beta, r2, n) %>% head(20)
+}
+```
+
+### Histogram of β
+
+```{r}
+fig_beta <- "figures/beta_hist.png"
+if (file.exists(fig_beta)) {
+  knitr::include_graphics(fig_beta)
+} else if (exists("pan")) {
+  ggplot(pan, aes(x=beta)) + geom_histogram(bins=30) + theme_minimal()
+}
+```
+
+### One example scatter
+
+```{r}
+# Try to locate any one timeseries parquet
+ts_root <- "results/timeseries"
+if (dir.exists(ts_root)) {
+  days <- list.files(ts_root, full.names = TRUE)
+  if (length(days) > 0) {
+    pq_files <- list.files(days[1], pattern="\\.parquet$", full.names = TRUE)
+    if (length(pq_files) > 0) {
+      ts <- read_parquet(pq_files[1])
+      if (all(c("normalized_OFI","d_mid_bps") %in% names(ts))) {
+        ggplot(ts, aes(x=normalized_OFI, y=d_mid_bps)) + 
+          geom_point(alpha=.2, size=.5) + 
+          geom_smooth(method="lm", se=FALSE) + 
+          theme_minimal()
+      }
+    }
+  }
+}
+```
