@@ -102,8 +102,10 @@ def compute_ofi_depth_mid(df: pd.DataFrame)->pd.DataFrame:
     bP,aP=df["bid"],df["ask"]; bS,aS=df["bid_sz"],df["ask_sz"]
     dbP,daP=bP.diff(),aP.diff(); dbS,daS=bS.diff(),aS.diff()
     ofi=pd.Series(np.zeros(len(df)),index=df.index,dtype="float64")
+    # Bid side: price up = aggressive buy (+), price down = bid withdrawn (-), size change at same price
     ofi+=np.where(dbP>0,bS,0.0); ofi+=np.where(dbP<0,-bS.shift(1),0.0); ofi+=np.where(dbP==0,dbS.fillna(0.0),0.0)
-    ofi+=np.where(daP>0,-aS.shift(1),0.0); ofi+=np.where(daP<0,aS,0.0); ofi+=np.where(daP==0,-daS.fillna(0.0),0.0)
+    # Ask side: price down = aggressive sell (-), price up = ask withdrawn (+), size change at same price (-)
+    ofi+=np.where(daP>0,-aS.shift(1),0.0); ofi+=np.where(daP<0,-aS,0.0); ofi+=np.where(daP==0,-daS.fillna(0.0),0.0)
     depth=bS+aS; mid=0.5*(bP+aP); d_mid_bps=1e4*mid.pct_change()
     
     # Filter out unrealistic price jumps (>10% move in 1 second = >1000 bps)
