@@ -43,3 +43,28 @@ htmlcov/
 *.synctex.gz
 *.fls
 *.fdb_latexmk
+*.tex
+*.knit.md
+
+# R output files
+*.Rout
+*.html
+
+# Intermediate results (regenerable)
+results/
+results_fixed/
+
+# Temporary documentation files
+ANALYSIS_SUMMARY.md
+FINAL_REPORT.md
+NEXT_STEPS.md
+PROOFREAD_REPORT.md
+SUBMISSION_CHECKLIST.md
+CLEANUP_GUIDE.md
+CLEANUP_SUMMARY.md
+
+# Cleanup scripts
+cleanup.ps1
+
+# Presentation folder (already have figures_presentation/)
+presentation/
