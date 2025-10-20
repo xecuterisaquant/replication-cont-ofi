@@ -2,7 +2,7 @@
 title: "Replication: The Price Impact of Order Book Events"
 subtitle: "Cont, Kukanov & Stoikov (2014)"
 authors:
-  - name: 'Harsh Hari^[Code and data available at: https://github.com/xecuterisaquant/replication-cont-ofi]'
+  - name: "Harsh Hari"
     email: harsh6@illinois.edu
     department: Finance
     affiliation: University of Illinois
@@ -801,6 +801,8 @@ This replication project benefited from AI assistance provided by GitHub Copilot
 All analysis, interpretation, and conclusions remain my own work. The AI served as a productivity tool similar to advanced autocomplete and documentation lookup, but did not make research decisions or interpret results.
 
 I acknowledge the original authors, Rama Cont, Arseniy Kukanov, and Sasha Stoikov [@Cont2014], for their seminal contribution to market microstructure research. Their clear exposition and reproducible methodology made this replication feasible.
+
+**Code and Data Availability:** The complete replication code, data, and documentation are available at: \url{https://github.com/xecuterisaquant/replication-cont-ofi}
 
 \newpage
 
