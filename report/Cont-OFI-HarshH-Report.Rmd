@@ -2,7 +2,7 @@
 title: "Replication: The Price Impact of Order Book Events"
 subtitle: "Cont, Kukanov & Stoikov (2014)"
 authors:
-  - name: "Harsh Hari"
+  - name: 'Harsh Hari^[Code and data available at: https://github.com/xecuterisaquant/replication-cont-ofi]'
     email: harsh6@illinois.edu
     department: Finance
     affiliation: University of Illinois
